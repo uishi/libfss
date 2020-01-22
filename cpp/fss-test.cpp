@@ -3,30 +3,38 @@
 #include "fss-server.h"
 #include "fss-client.h"
 
+const uint32_t kNumParty2 = 2;
+const uint32_t kNumParty3 = 3;
+
 int main()
 {
     // Set up variables
-    uint64_t a = 3;
-    uint64_t b = 2;
-    Fss fClient, fServer;
-    ServerKeyEq k0;
-    ServerKeyEq k1;
+    Fss fClient;
 
     // Initialize client, use 10 bits in domain as example
-    initializeClient(&fClient, 10, 2); 
+		uint32_t domain_bit = 10;
+    initializeClient(&fClient, domain_bit, kNumParty2);
     
     // Equality FSS test
+		// Eval(i, k0) + Eval(i, k1) = b iff i = a and 0 otherwise
+    uint64_t a = 3;
+    uint64_t b = 2;
+    ServerKeyEq k0;
+    ServerKeyEq k1;
     generateTreeEq(&fClient, &k0, &k1, a, b);
     
     // Initialize server
+		Fss fServer;
     initializeServer(&fServer, &fClient);
     mpz_class ans0, ans1, fin;
     
+		// Eval (DPF)
     ans0 = evaluateEq(&fServer, &k0, a);
     ans1 = evaluateEq(&fServer, &k1, a);
     fin = ans0 - ans1;
-    cout << "FSS Eq Match (should be non-zero): " << fin << endl;
+    cout << "FSS Eq Match (should be non-zero): " << fin << endl; // equal to b
     
+		// Eval (DPF)
     ans0 = evaluateEq(&fServer, &k0, (a-1));
     ans1 = evaluateEq(&fServer, &k1, (a-1));
     fin = ans0 - ans1;
@@ -36,17 +44,18 @@ int main()
     ServerKeyLt lt_k0;
     ServerKeyLt lt_k1;
     
-    initializeClient(&fClient, 10, 2);
+    initializeClient(&fClient, domain_bit, kNumParty2);
     generateTreeLt(&fClient, &lt_k0, &lt_k1, a, b);
-
     initializeServer(&fServer, &fClient);
-    uint64_t lt_ans0, lt_ans1, lt_fin;
 
+    // Eval (Interval)
+    uint64_t lt_ans0, lt_ans1, lt_fin;
     lt_ans0 = evaluateLt(&fServer, &lt_k0, (a-1));
     lt_ans1 = evaluateLt(&fServer, &lt_k1, (a-1));
     lt_fin = lt_ans0 - lt_ans1;
     cout << "FSS Lt Match (should be non-zero): " << lt_fin << endl;
 
+    // Eval (Interval)
     lt_ans0 = evaluateLt(&fServer, &lt_k0, a);
     lt_ans1 = evaluateLt(&fServer, &lt_k1, a);
     lt_fin = lt_ans0 - lt_ans1;
@@ -54,7 +63,7 @@ int main()
 
     // Equality FSS test for multi-parties
     MPKey mp_keys[3];
-    initializeClient(&fClient, 10, 3);
+    initializeClient(&fClient, domain_bit, kNumParty3);
     generateTreeEqMParty(&fClient, a, b, mp_keys);
 
     initializeServer(&fServer, &fClient);
@@ -85,5 +94,5 @@ int main()
     std::cout << "Benchmark result: " <<
      std::chrono::duration<double, std::milli>(t_end - t_begin).count()
      << " ms" << endl;
-    return 1;
+    return 0;
 }
