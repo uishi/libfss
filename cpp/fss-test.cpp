@@ -40,6 +40,11 @@ int main()
     fin = ans0 - ans1;
     cout << "FSS Eq No Match (should be 0): " << fin << endl;
 
+    ans0 = evaluateEq(&fServer, &k0, (1 << domain_bit));
+    ans1 = evaluateEq(&fServer, &k1, (1 << domain_bit));
+    fin = ans0 - ans1;
+    cout << "FSS Eq No Match (should be 0): " << fin << endl;
+
     // Less than FSS test
     ServerKeyLt lt_k0;
     ServerKeyLt lt_k1;
@@ -84,15 +89,28 @@ int main()
     for(size_t i=0; i<rounds; i++) {
         volatile auto x = evaluateEq(&fServer, &k0, i);
     }
+    auto t_end = std::chrono::high_resolution_clock::now();
+    std::cout << " DPFx" << rounds << ": " <<
+     std::chrono::duration<double, std::milli>(t_end - t_begin).count()
+     << " ms" << endl;
+
+    t_begin = std::chrono::high_resolution_clock::now();
     for(size_t i=0; i<rounds; i++) {
         volatile auto x = evaluateLt(&fServer, &lt_k0, i);
     }
+    t_end = std::chrono::high_resolution_clock::now();
+    std::cout << " Intervalx" << rounds << ": " <<
+     std::chrono::duration<double, std::milli>(t_end - t_begin).count()
+     << " ms" << endl;
+
+    t_begin = std::chrono::high_resolution_clock::now();
     for(size_t i=0; i<rounds; i++) {
         volatile auto x = evaluateEqMParty(&fServer, &mp_keys[1], a);
     }
-    auto t_end = std::chrono::high_resolution_clock::now();
-    std::cout << "Benchmark result: " <<
+    t_end = std::chrono::high_resolution_clock::now();
+    std::cout << " DPF 3party x" << rounds << ": " <<
      std::chrono::duration<double, std::milli>(t_end - t_begin).count()
      << " ms" << endl;
+
     return 0;
 }
